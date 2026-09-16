@@ -1,5 +1,7 @@
 # laravel-mcp-adapter
 
+[English](./README.md) | [繁體中文](./README.zh-TW.md)
+
 A [Claude Code Skill](https://docs.claude.com/en/docs/claude-code/skills) that
 wraps a Laravel application as an MCP (Model Context Protocol) Streamable
 HTTP server, so AI assistants (ChatGPT, Claude, Gemini, Grok, ...) can call
