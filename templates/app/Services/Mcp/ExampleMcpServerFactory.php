@@ -41,6 +41,18 @@ class ExampleMcpServerFactory
                     ],
                 ],
             )
+            ->addTool(
+                handler: [$this->tools, 'listExampleItems'],
+                name: 'listExampleItems',
+                description: '範例：查詢 example_items 資料表，示範 Tools 直接呼叫 Eloquent Model 的架構（見 references/writing-tools.md 架構選擇 1）。可選填 status 篩選。',
+                annotations: $readOnly,
+                inputSchema: [
+                    'type' => 'object',
+                    'properties' => [
+                        'status' => $this->nullable('string', '依 status 欄位篩選，不帶就回傳全部'),
+                    ],
+                ],
+            )
             ->setSession(sessionStore: new FileSessionStore(storage_path('app/mcp-sessions')))
             ->build();
     }

@@ -26,7 +26,26 @@ class McpAdapterTest extends TestCase
         $response = $this->callMcp($sessionId, 'tools/list', new \stdClass);
 
         $response->assertOk();
-        $this->assertContains('ping', array_column($response->json('result.tools'), 'name'));
+        $names = array_column($response->json('result.tools'), 'name');
+        $this->assertContains('ping', $names);
+        $this->assertContains('listExampleItems', $names);
+    }
+
+    public function test_list_example_items_returns_real_database_rows(): void
+    {
+        ExampleItem::create(['title' => '測試項目 A', 'status' => 'pending']);
+        ExampleItem::create(['title' => '測試項目 B', 'status' => 'done']);
+
+        $sessionId = $this->initializeSession();
+
+        $response = $this->callMcp($sessionId, 'tools/call', [
+            'name' => 'listExampleItems',
+            'arguments' => ['status' => 'done'],
+        ]);
+
+        $response->assertOk();
+        $items = $response->json('result.structuredContent') ?? $response->json('result.content.0.text');
+        $this->assertStringContainsString('測試項目 B', json_encode($items, JSON_UNESCAPED_UNICODE));
     }
 
     public function test_mcp_endpoint_rejects_wrong_inbound_key(): void

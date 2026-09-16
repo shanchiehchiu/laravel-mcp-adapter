@@ -48,12 +48,20 @@ Guzzle）間接裝進來，也要明確裝上。
 | `templates/config/mcp.php` | `config/mcp.php` |
 | `templates/app/Http/Middleware/McpApiKey.php` | `app/Http/Middleware/McpApiKey.php` |
 | `templates/app/Http/Controllers/Api/McpController.php` | `app/Http/Controllers/Api/McpController.php` |
-| `templates/app/Services/Mcp/ExampleMcpServerFactory.php` | `app/Services/Mcp/ExampleMcpServerFactory.php`（之後重新命名，見步驟 4） |
+| `templates/app/Services/Mcp/ExampleMcpServerFactory.php` | `app/Services/Mcp/ExampleMcpServerFactory.php`（之後重新命名，見步驟 5） |
 | `templates/app/Services/Mcp/ExampleMcpTools.php` | `app/Services/Mcp/ExampleMcpTools.php`（之後重新命名） |
+| `templates/app/Models/ExampleItem.php` | `app/Models/ExampleItem.php`（示範用，見步驟 5） |
+| `templates/database/migrations/create_example_items_table.php` | 先跑 `php artisan make:migration create_example_items_table --create=example_items` 建檔名，再貼內容進去 |
 | `templates/routes/mcp.php` | `routes/mcp.php` |
 
-這些檔案都是可以直接執行的完整版本，`.env` 補上 `MCP_API_KEY=<32字元以上
-隨機字串>` 之後就能跑。
+這些檔案都是可以直接執行的完整版本。複製完後：
+
+```bash
+php artisan migrate
+php artisan tinker --execute="App\Models\ExampleItem::create(['title' => '測試項目 A', 'status' => 'pending']); App\Models\ExampleItem::create(['title' => '測試項目 B', 'status' => 'done']);"
+```
+
+`.env` 補上 `MCP_API_KEY=<32字元以上隨機字串>` 之後就能跑。
 
 ### 3. 接線（middleware alias + 路由註冊）
 
@@ -72,15 +80,22 @@ curl http://your-app.test/mcp-health
 ```
 
 再照 [references/testing.md](./references/testing.md) 走一次
-`initialize`→`tools/list`，確認能看到範例的 `ping` 工具。**先確認這一步
-沒問題再進到下一步**，握手都跑不動的話，接上真資料只會更難除錯。
+`initialize`→`tools/list`→`tools/call`，確認能看到兩個範例工具：
+`ping`（不碰資料庫，純粹證明協定握手沒問題）跟 `listExampleItems`
+（真的查 `example_items` 資料表，回傳步驟 2 塞進去的假資料）。**先確認
+這一步沒問題再進到下一步**，握手都跑不動的話，接上真資料只會更難除錯。
 
 ### 5. 寫你自己的 Tools
 
-`ExampleMcpServerFactory`/`ExampleMcpTools` 只是骨架驗證用的最小範例。
-接上真正資料前，讀 [references/writing-tools.md](./references/writing-tools.md)——
-裡面有兩個容易漏掉的坑（optional 參數的 inputSchema 陷阱、兩種可能的
-架構選擇），照著改完，把類別重新命名成你專案的名字並更新
+`ExampleMcpServerFactory`/`ExampleMcpTools`/`ExampleItem` 只是骨架驗證用
+的最小範例——`ping` 純粹驗證協定，`listExampleItems` 才是真正示範
+「Tools 直接呼叫 Eloquent Model」這個最常見架構的完整可執行寫法（一個
+`Model::query()`、一個 optional 篩選參數）。接上真正資料時，讀
+[references/writing-tools.md](./references/writing-tools.md)——裡面
+有兩個容易漏掉的坑（optional 參數的 inputSchema 陷阱、Eloquent 直查
+vs. 轉呼叫既有 REST API 這兩種架構選擇），把 `ExampleItem` 換成你自己
+的 Model、`listExampleItems` 改成你要的查詢邏輯，`ping` 可以留著當健康
+檢查工具、也可以直接刪掉，兩個類別記得重新命名成你專案的名字並更新
 `McpController` 裡的型別提示。
 
 ### 6. 補測試
